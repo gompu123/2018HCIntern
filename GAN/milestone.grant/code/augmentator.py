@@ -127,8 +127,8 @@ def main():
         image=opt.image)
     GAN.train(opt.epoch_num)
     gen_data = GAN.generate(opt.gen_num)
-    data_loader.dataset.dataDenorm(gen_data)
-    data_loader.dataset.dataRound(gen_data)
+    # data_loader.dataset.dataDenorm(gen_data)
+    # data_loader.dataset.dataRound(gen_data)
     GAN.save('{}/generator_weight'.format(opt.path), '{}/discriminator_weight'.format(opt.path))
     gen_data.to_csv('{}/gen_data.csv'.format(opt.path), index=False)
     return GAN, gen_data

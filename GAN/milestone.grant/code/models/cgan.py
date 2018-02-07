@@ -90,7 +90,7 @@ class CGAN(GAN):
                 y_label.scatter_(1, y_pred.view(batch_size, 1), 1)
 
                 if tcuda.is_available():
-                    z, y_label = Variable(z), Variable(y_label)
+                    z, y_label = z.cuda(), y_label.cuda()
                 z, y_label = Variable(z), Variable(y_label)
                 y_pred = self.D(self.G(z, y_label), y_label).squeeze()
                 train_loss = self.BCE_loss(y_pred, y_real)
@@ -120,11 +120,16 @@ class CGAN(GAN):
         self.G.eval()
         results = self.G(z, c)
         resultsd = torch.cat([results.data, c_], 1)
+        print(resultsd)
         self.G.train()
         return pd.DataFrame(
             resultsd.numpy(),
-            columns=self.train_loader.dataset.df.columns
+            columns=None
         )
+        # return pd.DataFrame(
+        #     resultsd.numpy(),
+        #     columns=self.train_loader.dataset.df.columns
+        # )
 
 
     def save(self, generator_path, discriminator_path):
