@@ -66,14 +66,14 @@ class ConditionalBNGenerator(nn.Module):
     def __init__(self, z_size, x_size, class_num, **kwargs):
         super().__init__()
         self.fc1_1 = nn.Linear(z_size, 256)
-        self.fc1_1_bn = nn.BatchNorm1d(self.fc1_1.out_features)
+        self.fc1_1_bn = nn.BatchNorm1d(256)
         self.fc1_2 = nn.Linear(class_num, 256)
-        self.fc1_2_bn = nn.BatchNorm1d(self.fc1_2.out_features)
-        self.fc2 = nn.Linear(self.fc1_1.out_features + self.fc1_2.out_features, 512)
-        self.fc2_bn = nn.BatchNorm1d(self.fc2.out_features)
-        self.fc3 = nn.Linear(self.fc2.out_features, 1024)
-        self.fc3_bn = nn.BatchNorm1d(self.fc3.out_features)
-        self.fc4 = nn.Linear(self.fc3.out_features, x_size)
+        self.fc1_2_bn = nn.BatchNorm1d(256)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc2_bn = nn.BatchNorm1d(512)
+        self.fc3 = nn.Linear(512, 1024)
+        self.fc3_bn = nn.BatchNorm1d(1024)
+        self.fc4 = nn.Linear(1024, x_size)
 
     def weight_init(self, mean, std):
         for m in self._modules:

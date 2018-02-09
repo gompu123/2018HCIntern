@@ -19,6 +19,8 @@ class DataFrameDataset(Dataset):
         self.dataCheck()
         self.dfmax = self.df.max()
         self.dfmin = self.df.min()
+        self.dfmean = self.df.mean()
+        self.dfstd = self.df.std()
         # print(self.categories)
 
     def __len__(self):
@@ -54,23 +56,29 @@ class DataFrameDataset(Dataset):
                 elif ans.lower() == 'an':
                     break
 
+    def dataStandardize(self):
+        self.df = (self.df - self.dfmean) / self.dfstd
+
     def dataNorm(self):
-        # print(self.df['A..papers'])
-        self.df = (self.df - self.dfmin) / (self.dfmax - self.dfmin)
-        # print(self.df['A..papers'])
+        self.df = (self.df - self.dfmin) / (self.dfmax - self.dfmin) * 2 - 1
+
+    def dataDestandarize(self, df=None):
+        print(self.dfmean)
+        if df is None:
+            self.df = self.df * self.dfstd + self.dfmean
+        else:
+            return df * self.dfstd + self.dfmean
 
     def dataDenorm(self, df=None):
         if df is None:
             self.df = self.df * (self.dfmax - self.dfmin) + self.dfmin
         else:
-            # print(df['A..papers'])
-            df = df * (self.dfmax - self.dfmin) + self.dfmin
-            # print(df['A..papers'])
+            return (df + 1) / 2 * (self.dfmax - self.dfmin) + self.dfmin
 
     def dataRound(self, df):
         from bisect import bisect_left
         from tqdm import tqdm
-        pbar = tqdm(total = self.categories)
+        pbar = tqdm(total = len(self.categories))
         def round_val(mlist, mnum):
             pos = bisect_left(mlist, mnum)
             if pos == 0:
@@ -98,11 +106,11 @@ def main():
         data_loader = torch.utils.data.DataLoader(
             dset.MNIST('../data', train=True, download=True,
                            transform=transforms.Compose([
-                                transforms.ToTensor(),
-                                transforms.Normalize((0.1307,), (0.3081,)),
-                                transforms.Lambda(lambda x: x.view(-1))
+                               transforms.ToTensor(),
+                               transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+                               transforms.Lambda(lambda x: x.view(-1))
                            ])),
-            batch_size=opt.batch_size, shuffle=True)
+            batch_size=opt.batch_size, shuffle=False)
     # testing
     else:
         data_loader = load_data()
@@ -127,8 +135,10 @@ def main():
         image=opt.image)
     GAN.train(opt.epoch_num)
     gen_data = GAN.generate(opt.gen_num)
-    # data_loader.dataset.dataDenorm(gen_data)
-    # data_loader.dataset.dataRound(gen_data)
+    # gen_data = data_loader.dataset.dataDenorm(gen_data)
+    gen_data = data_loader.dataset.dataDestandarize(gen_data)
+    # print(gen_data)
+    data_loader.dataset.dataRound(gen_data)
     GAN.save('{}/generator_weight'.format(opt.path), '{}/discriminator_weight'.format(opt.path))
     gen_data.to_csv('{}/gen_data.csv'.format(opt.path), index=False)
     return GAN, gen_data
@@ -146,8 +156,9 @@ def load_data():
     else:
         # error handling
         dataset = None
-    dataset.dataNorm()
-    return DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
+    # dataset.dataNorm()
+    dataset.dataStandardize()
+    return DataLoader(dataset, batch_size=opt.batch_size, shuffle=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
